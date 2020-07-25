@@ -19,4 +19,4 @@ def get_url_name(url):
 urls = tuple(f'https://movie.douban.com/top250?start={page * 25}&filter=' for page in range(10))
 
 for url in urls:
-    get_url_name(url)
+    get_url_name(url)   
