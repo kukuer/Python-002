@@ -108,14 +108,23 @@ ROBOTSTXT_OBEY = True
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     'spider2.middlewares.Spider2DownloaderMiddleware': 543,
-    'spider2.middlewares.RandomHttpProxyMiddleware':400
+    'spider2.middlewares.RandomHttpProxyMiddleware': 400
 }
 
 HTTP_PROXY_LIST = [
     'http://52.179.231.206:80',
     'http://95.0.194.241:9090',
-    'http://95.179.210.253:32763'
+    'http://95.179.210.253:32763',
+    'http://165.225.36.66:10605'
 ]
+
+DB_INFO = {
+    'host': '192.168.3.87',
+    'port': 3306,
+    'user': 'root',
+    'password': '123456',
+    'db': 'test'
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html

@@ -6,14 +6,53 @@
 
 # useful for handling different item types with a single interface
 
+import pymysql
+
 
 class Spider2Pipeline:
 
+    def __init__(self, db_info):
+        self.host = db_info['host']
+        self.port = db_info['port']
+        self.user = db_info['user']
+        self.pwd = db_info['password']
+        self.db = db_info['db']
+
+        self.conn = pymysql.connect(
+            host=self.host,
+            port=self.port,
+            user=self.user,
+            password=self.pwd,
+            db=self.db
+        )
+        print('------------- CONNECT --------------------')
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(crawler.settings.get('DB_INFO'))
+
     def process_item(self, item, spider):
-        film_name = item['film_name']
-        film_type = item['film_type']
-        film_time = item['film_time']
-        output = f'{film_name},\t{film_type},\t{film_time},\n'
-        with open('./filmInfo.csv', mode='a+', encoding='utf-8') as f:
-            f.write(output)
+
+        # sql插入语句
+        insert_sql = """
+        insert into 
+            movies_info(movie_name, movie_type, movie_time)
+        values 
+            (%s, %s, %s)
+        """
+
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(insert_sql, (
+                item['film_name'], item['film_type'], item['film_time']))
+            cursor.close()
+            self.conn.commit()
+        except Exception as e:
+            print(f'异常：{e}')
+            self.conn.rollback()
+
         return item
+
+    def close_spider(self, spider):
+        self.conn.close()
+
