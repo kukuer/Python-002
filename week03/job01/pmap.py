@@ -4,9 +4,21 @@
 # @Author  : xh.w
 # @File    : pmap.py
 
+"""
+1. -n：指定并发数量。
+2. -f ping：进行 ping 测试
+3. -f tcp：进行 tcp 端口开放、关闭测试。
+4. -ip：连续 IP 地址支持 192.168.0.1-192.168.0.100 写法。
+5. -w：扫描结果进行保存。
+6. 通过参数 [-m proc|thread] 指定扫描器使用多进程或多线程模型。
+7. 扫描结果显示在终端，并使用 json 格式保存至文件。
+8. -v 参数打印扫描器运行耗时。
+"""
+
 import os
 import re
 import json
+import time
 import socket
 import argparse
 from multiprocessing import cpu_count
@@ -36,7 +48,7 @@ def ping(host: str):
 
 
 def tcp(host: str, port: str):
-
+    """TCP扫描端口"""
     result = {}
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -52,13 +64,11 @@ def tcp(host: str, port: str):
         sock.close()
 
 
-def ip_split(arg: str):
+def ip_split(ip_str):
     """根据命令行参数分割IP段"""
     ip_list = []
-    start_ip, end_ip = arg.split('-')
-
-    start_ip1, start_ip2, start_ip3, start_ip4 = start_ip.split('.')
-    end_ip_split_list = end_ip.split('.')
+    start_ip1, start_ip2, start_ip3, start_ip4 = ip_str[0].split('.')
+    end_ip_split_list = ip_str[1].split('.')
 
     loop_num = int(end_ip_split_list[3]) - int(start_ip4) + 1
 
@@ -69,42 +79,12 @@ def ip_split(arg: str):
     return ip_list
 
 
-def process_schema(num, action, ip_str, save_file=None):
-
+def process_schema(num, ip_str, save_file=None):
+    """多进程扫描"""
     resutl = {}
     future_list = []
     with ProcessPoolExecutor(max_workers=num) as executor:
         try:
-            if action == 'ping':
-                ip_list = ip_split(ip_str)
-                if save_file:
-                    for ip in ip_list:
-                        future = executor.submit(ping, ip)
-                        future_list.append(future.result())
-                    resutl['ping'] = future_list
-                    save_result(save_file, json.dumps(resutl))
-                else:
-                    executor.map(ping, ip_list)
-            else:
-                if save_file:
-                    for port in range(21, 24):
-                        future = executor.submit(tcp, ip_str, port)
-                        future_list.append(future.result())
-                    resutl['tcp'] = future_list
-                    save_result(save_file, json.dumps(resutl))
-                else:
-                    for port in range(21, 24):
-                        executor.submit(tcp, ip_str, port)
-        except:
-            pass
-
-
-def thread_schema(num, ip_str, save_file=None):
-    resutl = {}
-    future_list = []
-    with ThreadPoolExecutor(max_workers=num) as executor:
-        try:
-            # if action == 'ping':
             if isinstance(ip_str, list):
                 ip_list = ip_split(ip_str)
                 if save_file:
@@ -119,18 +99,48 @@ def thread_schema(num, ip_str, save_file=None):
                 if save_file:
                     for port in range(21, 24):
                         future = executor.submit(tcp, ip_str, port)
-                        future_list.append(future.result)
+                        future_list.append(future.result())
                     resutl['tcp'] = future_list
                     save_result(save_file, json.dumps(resutl))
                 else:
                     for port in range(21, 24):
                         executor.submit(tcp, ip_str, port)
-        except:
-            pass
+        except Exception as e:
+            print(e)
+
+
+def thread_schema(num, ip_str, save_file):
+    """多线程扫描"""
+    resutl = {}
+    future_list = []
+    with ThreadPoolExecutor(max_workers=num) as executor:
+        try:
+            if isinstance(ip_str, list):
+                ip_list = ip_split(ip_str)
+                if save_file:
+                    for ip in ip_list:
+                        future = executor.submit(ping, ip)
+                        future_list.append(future.result())
+                    resutl['ping'] = future_list
+                    save_result(save_file, json.dumps(resutl))
+                else:
+                    executor.map(ping, ip_list)
+            else:
+                if save_file:
+                    for port in range(21, 24):
+                        future = executor.submit(tcp, ip_str, port)
+                        future_list.append(future.result())
+                    resutl['tcp'] = future_list
+                    save_result(save_file, json.dumps(resutl))
+                else:
+                    for port in range(21, 24):
+                        executor.submit(tcp, ip_str, port)
+        except Exception as e:
+            print(e)
 
 
 def save_result(save_file, rt_value):
-    with open(f'./{save_file}', 'a+', encoding='utf-8') as f:
+    with open(f'./{save_file}', 'w+', encoding='utf-8') as f:
         f.write(rt_value + '\n')
 
 
@@ -144,6 +154,20 @@ def check_ip(ip_str):
     else:
         print(compile_ip)
         return False
+
+
+def _check_ip_range(ip_str):
+
+    ip_list = ip_str.split('-')
+
+    for ip in ip_list:
+        if not check_ip(ip):
+            return
+
+    if ip_list[0].split('.')[3] >= ip_list[1].split('.')[3]:
+        return
+
+    return ip_list
 
 
 if __name__ == '__main__':
@@ -178,7 +202,13 @@ if __name__ == '__main__':
         help='连续 IP 地址, 支持格式例: -f tcp: xxx.xxx.xxx.xxx 或'
              '-f ping : xxx.xxx.xxx.xxx-xxx.xxx.xxx.xxx'
     )
-    parser.add_argument('-w', '--save', type=str, help='扫描结果进行保存')
+    parser.add_argument(
+        '-v',
+        '--time',
+        action='store_true',
+        help='扫描器运行耗时，默认不打印运行耗时'
+    )
+    parser.add_argument('-w', '--save', type=str, default=None, help='扫描结果进行保存')
     args = parser.parse_args()
 
     if not args.schema:
@@ -187,6 +217,9 @@ if __name__ == '__main__':
     if not args.ip:
         raise ValueError('请正确输入ip地址，详见帮助：-ip')
 
+    print('----------------- 扫描开始 ---------------------')
+    start_time = time.time()
+
     if args.schema.lower() == 'thread':
 
         if args.action.lower() == 'ping':
@@ -194,15 +227,18 @@ if __name__ == '__main__':
             if args.ip.count('-', 0, len(args.ip)) != 1:
                 raise ValueError('请根据扫描模式(-f)输入ip地址，详见帮助：-ip')
 
-            start_ip, end_ip = args.ip.split('-')
+            ip_list = _check_ip_range(args.ip)
 
-            thread_schema(args.num, 'ping', args.ip, args.save)
+            if not ip_list:
+                raise ValueError('请ip段格式，详见帮助：-ip')
+
+            thread_schema(args.num, ip_list, args.save)
         elif args.action.lower() == 'tcp':
 
             if not check_ip(args.ip):
                 raise ValueError('请根据扫描模式(-f)输入ip地址，详见帮助：-ip')
 
-            thread_schema(args.num, 'tcp', args.ip, args.save)
+            thread_schema(args.num, args.ip, args.save)
 
     elif args.schema.lower() == 'proc':
 
@@ -214,15 +250,27 @@ if __name__ == '__main__':
             if args.ip.count('-', 0, len(args.ip)) != 1:
                 raise ValueError('请根据扫描模式(-f)输入ip地址，详见帮助：-ip')
 
-            process_schema(args.num, 'ping', args.ip, args.save)
+            ip_list = _check_ip_range(args.ip)
+
+            if not ip_list:
+                raise ValueError('请ip段格式，详见帮助：-ip')
+
+            process_schema(args.num, ip_list, args.save)
         elif args.action.lower() == 'tcp':
 
             if not check_ip(args.ip):
                 raise ValueError('请根据扫描模式(-f)输入ip地址，详见帮助：-ip')
 
-            process_schema(args.num, 'tcp', args.ip, args.save)
+            process_schema(args.num, args.ip, args.save)
         else:
             raise ValueError('请正确输入扫描模式，详见帮助：-m')
+
+        print('----------------- 扫描结束 ---------------------')
+
+        run_time = time.time() - start_time
+        if args.time:
+            print(f'【本次扫描耗时】：{run_time}')
+
     else:
         print('请正确输入-m（proc/thread）')
 
