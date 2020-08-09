@@ -97,13 +97,13 @@ def process_schema(num, ip_str, save_file=None):
                     executor.map(ping, ip_list)
             else:
                 if save_file:
-                    for port in range(21, 24):
+                    for port in range(1, 1025):
                         future = executor.submit(tcp, ip_str, port)
                         future_list.append(future.result())
                     resutl['tcp'] = future_list
                     save_result(save_file, json.dumps(resutl))
                 else:
-                    for port in range(21, 24):
+                    for port in range(1, 1025):
                         executor.submit(tcp, ip_str, port)
         except Exception as e:
             print(e)
@@ -127,13 +127,13 @@ def thread_schema(num, ip_str, save_file):
                     executor.map(ping, ip_list)
             else:
                 if save_file:
-                    for port in range(21, 24):
+                    for port in range(1, 1025):
                         future = executor.submit(tcp, ip_str, port)
                         future_list.append(future.result())
                     resutl['tcp'] = future_list
                     save_result(save_file, json.dumps(resutl))
                 else:
-                    for port in range(21, 24):
+                    for port in range(1, 1025):
                         executor.submit(tcp, ip_str, port)
         except Exception as e:
             print(e)
