@@ -86,10 +86,10 @@ class Zoo(object):
         self.zoo_animal = []
 
     def add_animal(self, animal):
-        class_name = type(animal).__name__
-        if class_name in self.__dict__:
-            raise ValueError(f'{animal}动物园中已经存在')
-        self.__dict__[class_name] = True
+        animal_species = type(animal).__name__
+        if animal_species in self.__dict__:
+            raise ValueError(f'{animal.name}同种动物已经存在')
+        self.__dict__[animal_species] = True
 
 
 if __name__ == '__main__':
@@ -98,6 +98,7 @@ if __name__ == '__main__':
     print(cat.name)
     print(f'是否适合当宠物: {cat.is_pet()}')
     z = Zoo('我的动物园')
+    z.add_animal(cat)
     z.add_animal(cat)
     have_cat = hasattr(z, 'Dog')
     print(have_cat)
