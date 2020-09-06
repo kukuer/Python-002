@@ -93,12 +93,12 @@ class Zoo(object):
 
 
 if __name__ == '__main__':
-    cat = Cat('大花猫', '食肉', '小型', '凶猛')
-    print(cat.sound)
-    print(cat.name)
-    print(f'是否适合当宠物: {cat.is_pet()}')
+    animal = Cat('大花猫', '食肉', '小型', '凶猛')
+    print(animal.sound)
+    print(animal.name)
+    print(f'是否适合当宠物: {animal.is_pet()}')
     z = Zoo('我的动物园')
-    z.add_animal(cat)
-    z.add_animal(cat)
-    have_cat = hasattr(z, 'Dog')
+    z.add_animal(animal)
+    # z.add_animal(animal)
+    have_cat = hasattr(z, type(animal).__name__)
     print(have_cat)
