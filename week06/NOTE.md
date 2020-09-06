@@ -148,4 +148,6 @@
 
    python manage.py migrate	#在数据库中生成表
 
+   
+
   

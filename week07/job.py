@@ -51,16 +51,6 @@ class Animal(metaclass=ABCMeta):
         pass
 
 
-def singleton(cls):
-    instances = {}
-    def get_instance():
-        if cls not in instances:
-            instances[cls] = cls()
-        return instances[cls]
-    return get_instance
-
-
-@singleton
 class Cat(Animal):
     sound = '喵喵喵'
 
@@ -75,7 +65,6 @@ class Cat(Animal):
         return not self.is_preyer()
 
 
-@singleton
 class Dog(Animal):
     sound = '汪汪汪'
 
@@ -104,7 +93,11 @@ class Zoo(object):
 
 
 if __name__ == '__main__':
-    cat = Dog('大花猫', '食肉', '小型', '凶猛')
+    cat = Cat('大花猫', '食肉', '小型', '凶猛')
     print(cat.sound)
     print(cat.name)
     print(f'是否适合当宠物: {cat.is_pet()}')
+    z = Zoo('我的动物园')
+    z.add_animal(cat)
+    have_cat = hasattr(z, 'Dog')
+    print(have_cat)
