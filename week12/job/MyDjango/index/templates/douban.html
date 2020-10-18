@@ -1,0 +1,16 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Books</title>
+</head>
+<body>
+
+{% for comment in comments %}
+    <div>ID: {{ comment.id }}   <br>
+            name: {{ comment.product_name }} <br>
+            comment:  {{ comment.comment_con }}  <br>
+            sentiment: {{comment.sentiment}} <br>
+            time: {{comment.creat_time}}
+    </div>
+{% endfor %}
+</body>

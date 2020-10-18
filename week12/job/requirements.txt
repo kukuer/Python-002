@@ -1,0 +1,5 @@
+Django==2.2.13
+PyMySQL==0.9.3
+snownlp==0.12.3
+pandas==1.0.3
+Scrapy==2.1.0
